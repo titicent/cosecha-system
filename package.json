@@ -1,0 +1,13 @@
+{
+  "name": "cosecha-system",
+  "version": "2.0.0",
+  "description": "Cosecha, el juego de la finca: versión de pedidos. Servidor, cliente, motor e imprimible.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "node pruebas.js",
+    "imprimible": "node gen-imprimible.js"
+  },
+  "engines": { "node": ">=18" },
+  "dependencies": { "ws": "^8.18.0" }
+}

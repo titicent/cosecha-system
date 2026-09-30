@@ -166,11 +166,11 @@ Hay 5 nubes escondidas en el mazo. Cuando alguien roba una:
 | Clima | Qué pasa |
 |---|---|
 | ☀️ **Sequía** | Todos los remedios de la mesa se van al montón. |
-| 🌧️ **Aguacero** | Cada jugador roba 1 carta ya. |
-| ❄️ **Helada** | Cada jugador acuesta una de sus matas maduras, si tiene. La endereza al empezar su próximo turno. |
+| 🌧️ **Aguacero** | Cada jugador roba 1 carta ya. Si sale una nube, se bota y se roba otra. |
+| ❄️ **Helada** | Cada jugador acuesta **su mata madura más a la izquierda**, si tiene. La endereza al empezar su próximo turno. |
 | 💰 **Bonanza** | Deja esta carta junto a la fila de pedidos. El próximo que entregue un pedido se la lleva, y **vale 2 puntos más**. |
 | 🎪 **Feria del pueblo** | Los 3 pedidos de la fila van al fondo de su mazo. Voltea 3 nuevos. |
-| 🌤️ **Cosecha temprana** | Cada jugador endereza uno de sus brotes, si tiene. |
+| 🌤️ **Cosecha temprana** | Cada jugador endereza **su brote más a la izquierda**, si tiene. |
 
 ---
 
@@ -222,29 +222,30 @@ Después de dos o tres partidas, agreguen las faenas y jueguen el juego completo
 - **¿El remedio protege los productos de la bodega?** No. En la bodega nada tiene remedio: si te llega una plaga de su color, lo pierdes. Por eso conviene entregar pronto.
 - **¿Tengo que entregar apenas pueda?** No. Puedes esperar a juntar un pedido más grande, pero tus productos quedan expuestos.
 - **¿Qué pasa si robo dos nubes seguidas?** Caen dos climas, uno después del otro.
-- **¿La Helada me quita lo que tengo en la bodega?** No. Solo acuesta una mata madura de tu finca.
+- **¿La Helada me quita lo que tengo en la bodega?** No. Solo acuesta una mata madura de tu finca: la que esté más a la izquierda.
+- **¿Por qué «la más a la izquierda»?** Para que nadie tenga que decidir ni recordar nada: se ve en la mesa y en línea pasa exactamente lo mismo.
 - **¿La Bonanza cuenta si la gano en el último turno?** Sí, son 2 puntos más.
 
 ---
 
 ## 12. Cómo se probaron estas reglas
 
-Las reglas se jugaron en un simulador con vecinos de la máquina: 4.000 partidas por cada número de jugadores y por cada modo.
+El motor del juego en línea (`public/reglas.js`) jugó 1.500 partidas por cada número de
+jugadores y cada modo, con vecinos de la máquina. Se juega con las cartas de verdad: lo
+cosechado queda en la bodega hasta que se entrega, igual que en la mesa.
 
 | Jugadores | Victorias por puesto | Duración aprox. | Termina por tierra agotada |
 |---|---|---|---|
-| 2 | 51 % / 49 % | 20 min | 0 % |
-| 3 | 32 % / 32 % / 36 % | 25 min | 1 % |
-| 4 | 24 % / 24 % / 26 % / 26 % | 31 min | 10 % |
-| 5 | 19 % / 20 % / 21 % / 20 % / 20 % | 28 min | 14 % |
+| 2 | 49 % / 51 % | 21 min | 0 % |
+| 3 | 34 % / 32 % / 34 % | 29 min | 6 % |
+| 4 | 27 % / 26 % / 24 % / 24 % | 35 min | 33 % |
+| 5 | 20 % / 23 % / 21 % / 17 % / 19 % | 30 min | 35 % |
 
 *Juego completo. La duración se calculó con unos 35 segundos por turno en la mesa.*
 
-Primera cosecha dio resultados muy parecidos: de 19 a 29 minutos, con una diferencia máxima de 4 puntos entre puestos.
+Con 4 y 5 jugadores, una de cada tres partidas se decide por puntos cuando se agota la
+tierra. Es una forma normal de terminar y mantiene la partida por debajo de 35 minutos.
+Primera cosecha dio resultados muy parecidos.
 
-**Lo que todavía no se ha probado con personas:**
-- en la Helada, cada quien escoge qué mata acostar (en el simulador se escogía al azar);
-- el desempate por productos en la bodega;
-- que la siembra de apertura se entienda a la primera en la mesa.
-
-Antes de imprimir un tiraje, conviene jugar al menos unas partidas reales.
+**Lo que todavía no se ha probado con personas:** el desempate y que la siembra de apertura
+se entienda a la primera. Para eso están el imprimible y la mesa en línea.

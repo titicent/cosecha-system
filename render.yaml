@@ -1,0 +1,10 @@
+# Plano de despliegue para Render: «New → Blueprint» con este repositorio.
+# Un solo servicio gratuito: sirve la página y las mesas en línea.
+services:
+  - type: web
+    name: cosecha-system
+    runtime: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /salud

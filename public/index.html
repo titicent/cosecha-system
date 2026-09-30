@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#24341C">
+<title>Cosecha · el juego de la finca</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 48 48'%3E%3Ccircle cx='24' cy='24' r='23' fill='%234A6338'/%3E%3Cellipse cx='24' cy='24' rx='11' ry='15' fill='%23F4EFE2'/%3E%3Cpath d='M24 11c-3 4.5-3 21.5 0 26' fill='none' stroke='%234A6338' stroke-width='3' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="estilo.css">
+</head>
+<body>
+<div id="paisaje" aria-hidden="true">
+  <svg viewBox="0 0 1200 800" preserveAspectRatio="xMidYMax slice">
+    <defs>
+      <linearGradient id="cielo" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#7FA9B8"/><stop offset=".4" stop-color="#A7C08E"/><stop offset=".65" stop-color="#6E8C4E"/><stop offset="1" stop-color="#33452A"/></linearGradient>
+    </defs>
+    <rect width="1200" height="800" fill="url(#cielo)"/>
+    <circle cx="912" cy="136" r="34" fill="#FFF0C4" opacity=".7"/>
+    <path d="M0 330 L120 268 L210 306 L330 232 L452 300 L560 254 L660 302 L790 240 L900 296 L1020 250 L1130 300 L1200 268 V800 H0Z" fill="#54737A" opacity=".6"/>
+    <path d="M0 404 L140 350 L280 396 L420 336 L580 398 L720 348 L860 398 L1000 344 L1140 396 L1200 370 V800 H0Z" fill="#43623D"/>
+    <path d="M0 520 L180 466 L360 514 L540 460 L720 512 L900 458 L1080 510 L1200 478 V800 H0Z" fill="#2E4226"/>
+    <g stroke="#1E2A17" stroke-width="16" stroke-linecap="round" opacity=".35" fill="none">
+      <path d="M-40 620 Q 300 578 640 626 T 1260 610"/><path d="M-40 690 Q 300 646 640 696 T 1260 678"/><path d="M-40 766 Q 300 720 640 772 T 1260 752"/></g>
+  </svg>
+  <span class="velo"></span>
+</div>
+<main id="app"></main>
+<div id="capa"></div>
+<script src="reglas.js"></script>
+<script src="cliente.js"></script>
+</body>
+</html>
