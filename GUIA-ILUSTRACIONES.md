@@ -24,7 +24,11 @@ el resto queda guardado para las expansiones.
 - **Formato:** PNG cuadrado 1:1, fondo transparente. Si la IA no da transparencia, usa fondo
   blanco liso; `prepara-cartas.py` lo quita.
 - **Tamaño:** 1024 × 1024 px.
-- **Nombre:** la clave de la carta + `.png`. Las claves están en las tablas de abajo.
+- **Nombre:** el que aparece en las tablas de abajo, tal cual, con su `.png`
+  (por ejemplo `e_tinto_campesino.png`). Cópialo de ahí para no equivocarte con los guiones bajos.
+- **Si la IA te lo entrega en JPG:** basta con guardarlo o renombrarlo con el nombre `.png` de la
+  tabla. Al correr `npm run preparar`, el script abre el archivo, le quita el fondo blanco y lo
+  guarda como PNG de verdad, con transparencia. No hace falta convertirlo aparte.
 - **Dónde va:** `public/cartas/`. Después corre `npm run preparar` y `npm run cartas`.
 
 ## 3. Bloque de estilo (cópialo idéntico)
@@ -70,29 +74,29 @@ ingredientes, porque en la mesa la gente va a buscar el café, el plátano, el c
 
 | Clave | Pedido | Sujeto para el prompt |
 |---|---|---|
-| `e_guarapo` | Guarapo | Un totumo lleno de guarapo de caña espumoso y dorado, con un trozo de caña al lado. |
-| `e_maduro` | Maduro | Un plátano maduro asado, dorado y caramelizado, abierto en una hoja de plátano. |
-| `e_panela` | Panela | Dos bloques de panela dorada, uno partido, sobre hojas secas de caña. |
-| `e_patacones` | Patacones | Una torre de patacones dorados y crujientes en un plato de barro. |
-| `e_colada_platano` | Colada de plátano | Un pocillo de peltre con colada de plátano espesa, con un plátano y un bloque de panela al lado. |
-| `e_tinto_campesino` | Tinto campesino | Un pocillo de peltre con tinto humeante y dos cerezas rojas de café a su lado. |
-| `e_tinto_panela` | Tinto con panela | Un pocillo de tinto humeante con un trozo de panela entrando al café. |
-| `e_chocolatina` | Chocolatina | Una barra de chocolate artesanal partida, con dos mazorcas de cacao pequeñas detrás. |
-| `e_chocolate_santafereno` | Chocolate santafereño | Una taza de chocolate caliente espumoso con un trozo de panela y un bizcocho al lado. |
-| `e_platano_chocolate` | Plátano con chocolate | Tajadas de plátano maduro bañadas en chocolate derretido en un plato de barro. |
-| `e_cafe_chocolate` | Café con chocolate | Una taza de café con chocolate, mitad oscura y mitad cremosa, con granos de café y cacao alrededor. |
-| `e_mercado_campesino` | Mercado campesino | Un canasto de fique con cerezas de café, un racimo de plátanos y cañas asomando. |
-| `e_cafe_exportacion` | Café de exportación | Un costal de fique cerrado y lleno de granos de café verde, con un sello en blanco sin letras. |
-| `e_cacao_fino` | Cacao fino de aroma | Tres mazorcas de cacao abiertas, mostrando las semillas blancas, sobre una hoja grande. |
-| `e_desayuno_paisa` | Desayuno paisa | Un plato de barro con tajadas de maduro y una arepa, un pocillo de chocolate y una taza de tinto. |
-| `e_canasta_completa` | Canasta completa | Un canasto grande desbordado con café, plátanos, mazorcas de cacao y cañas, con una cinta de premio sin texto. |
+| `e_guarapo.png` | Guarapo | Un totumo lleno de guarapo de caña espumoso y dorado, con un trozo de caña al lado. |
+| `e_maduro.png` | Maduro | Un plátano maduro asado, dorado y caramelizado, abierto en una hoja de plátano. |
+| `e_panela.png` | Panela | Dos bloques de panela dorada, uno partido, sobre hojas secas de caña. |
+| `e_patacones.png` | Patacones | Una torre de patacones dorados y crujientes en un plato de barro. |
+| `e_colada_platano.png` | Colada de plátano | Un pocillo de peltre con colada de plátano espesa, con un plátano y un bloque de panela al lado. |
+| `e_tinto_campesino.png` | Tinto campesino | Un pocillo de peltre con tinto humeante y dos cerezas rojas de café a su lado. |
+| `e_tinto_panela.png` | Tinto con panela | Un pocillo de tinto humeante con un trozo de panela entrando al café. |
+| `e_chocolatina.png` | Chocolatina | Una barra de chocolate artesanal partida, con dos mazorcas de cacao pequeñas detrás. |
+| `e_chocolate_santafereno.png` | Chocolate santafereño | Una taza de chocolate caliente espumoso con un trozo de panela y un bizcocho al lado. |
+| `e_platano_chocolate.png` | Plátano con chocolate | Tajadas de plátano maduro bañadas en chocolate derretido en un plato de barro. |
+| `e_cafe_chocolate.png` | Café con chocolate | Una taza de café con chocolate, mitad oscura y mitad cremosa, con granos de café y cacao alrededor. |
+| `e_mercado_campesino.png` | Mercado campesino | Un canasto de fique con cerezas de café, un racimo de plátanos y cañas asomando. |
+| `e_cafe_exportacion.png` | Café de exportación | Un costal de fique cerrado y lleno de granos de café verde, con un sello en blanco sin letras. |
+| `e_cacao_fino.png` | Cacao fino de aroma | Tres mazorcas de cacao abiertas, mostrando las semillas blancas, sobre una hoja grande. |
+| `e_desayuno_paisa.png` | Desayuno paisa | Un plato de barro con tajadas de maduro y una arepa, un pocillo de chocolate y una taza de tinto. |
+| `e_canasta_completa.png` | Canasta completa | Un canasto grande desbordado con café, plátanos, mazorcas de cacao y cañas, con una cinta de premio sin texto. |
 
 ### Faenas nuevas (2)
 
 | Clave | Faena | Sujeto para el prompt |
 |---|---|---|
-| `f_coyote` | El Coyote | Un coyote caricaturesco y simpático con sombrero aguadeño y carriel, que se aleja de puntillas con un bulto de café bajo el brazo y cara de travieso. |
-| `f_minga` | La Minga | Cuatro manos de distintos tonos de piel unidas alrededor de un brote de café que crece, con un azadón y un sombrero al lado. |
+| `f_coyote.png` | El Coyote | Un coyote caricaturesco y simpático con sombrero aguadeño y carriel, que se aleja de puntillas con un bulto de café bajo el brazo y cara de travieso. |
+| `f_minga.png` | La Minga | Cuatro manos de distintos tonos de piel unidas alrededor de un brote de café que crece, con un azadón y un sombrero al lado. |
 
 > Si quieres arrancar sin esperar, `f_saqueo.png` (Mano larga) puede servir de provisional
 > para El Coyote.
@@ -101,8 +105,8 @@ ingredientes, porque en la mesa la gente va a buscar el café, el plátano, el c
 
 | Clave | Carta | Sujeto para el prompt |
 |---|---|---|
-| `k_nube` | Nube (va en el mazo de la finca) | Una nube gris cargada, con cara curiosa y unas gotas y un pequeño rayo asomando, que anuncia que algo va a cambiar. |
-| `k_cosecha_temprana` | Cosecha temprana | Un sol radiante y sonriente sobre tres brotes de café que se estiran hacia arriba creciendo. |
+| `k_nube.png` | Nube (va en el mazo de la finca) | Una nube gris cargada, con cara curiosa y unas gotas y un pequeño rayo asomando, que anuncia que algo va a cambiar. |
+| `k_cosecha_temprana.png` | Cosecha temprana | Un sol radiante y sonriente sobre tres brotes de café que se estiran hacia arriba creciendo. |
 
 ### Íconos de tipo (silueta, van con `prepara-iconos.py`) (1)
 
@@ -111,10 +115,10 @@ sin detalles internos, y el script los vuelve blancos sobre transparente.
 
 | Clave | Ícono | Sujeto |
 |---|---|---|
-| `iconos/t_pedido` | Pedido | Silueta de un pocillo humeante. |
+| `iconos/t_pedido.png` | Pedido | Silueta de un pocillo humeante. |
 
 > Los íconos de clima y nube pueden usar la misma silueta de nube: si quieres uno aparte,
-> pide `iconos/t_clima` como silueta de una nube.
+> pide `iconos/t_clima.png` como silueta de una nube.
 
 ---
 
@@ -124,11 +128,11 @@ No hay que pintar nada nuevo para estas cartas:
 
 | Clave | Carta |
 |---|---|
-| `c_cafe`, `c_platano`, `c_cacao`, `c_cana`, `c_huerta` | Cultivos |
-| `p_comun_cafe`, `p_comun_platano`, `p_comun_cacao`, `p_comun_cana`, `p_comun_huerta` | Broca, Sigatoka, Monilia, Barrenador, Langosta |
-| `r_casero_cafe`, `r_casero_platano`, `r_casero_cacao`, `r_casero_cana`, `r_casero_huerta` | Caldo bordelés, Ceniza, Poda y sellado, Melaza trampa, Jabón potásico |
-| `f_trueque` | Trueque |
-| `k_sequia`, `k_aguacero`, `k_helada`, `k_bonanza`, `k_feria` | Climas |
+| `c_cafe.png`, `c_platano.png`, `c_cacao.png`, `c_cana.png`, `c_huerta.png` | Cultivos |
+| `p_comun_cafe.png`, `p_comun_platano.png`, `p_comun_cacao.png`, `p_comun_cana.png`, `p_comun_huerta.png` | Broca, Sigatoka, Monilia, Barrenador, Langosta |
+| `r_casero_cafe.png`, `r_casero_platano.png`, `r_casero_cacao.png`, `r_casero_cana.png`, `r_casero_huerta.png` | Caldo bordelés, Ceniza, Poda y sellado, Melaza trampa, Jabón potásico |
+| `f_trueque.png` | Trueque |
+| `k_sequia.png`, `k_aguacero.png`, `k_helada.png`, `k_bonanza.png`, `k_feria.png` | Climas |
 
 Los avatares `a_*` también siguen iguales.
 
@@ -142,11 +146,11 @@ Estas ilustraciones no se usan en el juego base, pero **no se botan**: servirán
 adapten Bonanza y Espantos a la nueva forma de jugar.
 
 - Plagas resistentes (`p_resistente_*`) y bioinsumos (`r_bioinsumo_*`)
-- Vivero (`c_vivero`) e Injerto (`c_injerto`)
+- Vivero (`c_vivero.png`) e Injerto (`c_injerto.png`)
 - Faenas: Mano larga, Propagación, Chaparrón, Cambio de lindero, Malla de sombra, Jornal extra,
   Consejo del mayordomo, Erradicación
-- Todos los espantos (`f_mohan_*`, `f_patasola`, `f_duende`, `f_llorona`, `f_madremonte`, `f_sombreron`)
-- Ventarrón (`k_ventarron`)
+- Todos los espantos (`f_mohan_*.png`, `f_patasola.png`, `f_duende.png`, `f_llorona.png`, `f_madremonte.png`, `f_sombreron.png`)
+- Ventarrón (`k_ventarron.png`)
 
 ---
 
@@ -160,9 +164,9 @@ El código dibuja estas piezas, así que no hay que generarlas:
 
 ## 9. Orden sugerido
 
-1. **Los 3 pedidos más usados** (`e_tinto_campesino`, `e_patacones`, `e_chocolate_santafereno`),
+1. **Los 3 pedidos más usados** (`e_tinto_campesino.png`, `e_patacones.png`, `e_chocolate_santafereno.png`),
    para fijar el estilo de los pedidos.
-2. **`k_nube`**, que es la que más se ve en la mesa.
-3. **`f_minga` y `f_coyote`.**
+2. **`k_nube.png`**, que es la que más se ve en la mesa.
+3. **`f_minga.png` y `f_coyote.png`.**
 4. **El resto de los pedidos.**
 5. **`k_cosecha_temprana` y el ícono.**
