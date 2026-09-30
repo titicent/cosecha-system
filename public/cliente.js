@@ -167,6 +167,15 @@ function mataHTML(m, j, o, B) {
 }
 const prodHTML = (p, j, b, B) => `<button class="prod ${B.has("b" + j + "." + b) ? "blanco" : ""}" data-prod="${j}.${b}" style="--c:${R.CULTIVO[p.c].hex}" title="${esc(R.CULTIVO[p.c].label)} en bodega">${cult(p.c)}</button>`;
 
+/* Dónde se sienta cada vecino alrededor de la mesa ovalada, según cuántos son.
+   Solo se usa en pantallas anchas; en el teléfono los vecinos van en lista. */
+const POS = {
+  1: [[50, 0]],
+  2: [[24, 30], [76, 30]],
+  3: [[11, 170], [50, 0], [89, 170]],
+  4: [[10, 190], [31, 10], [69, 10], [90, 190]],
+  5: [[9, 230], [23, 40], [50, 0], [77, 40], [91, 230]]
+};
 function mesa() {
   const yo = V.yo, J = V.jugadores, mi = J[yo], mio = V.turno === yo && !V.terminada, B = blancos();
   const orden = J.map((_, k) => (yo + 1 + k) % J.length).filter(i => i !== yo);
@@ -182,21 +191,26 @@ function mesa() {
       <button class="icono" id="bReglas" title="Cómo se juega" aria-label="Cómo se juega">?</button>
       <button class="icono" id="bSalir" title="Salir" aria-label="Salir de la partida">✕</button>
     </div>
-    <div class="rivales">${orden.map(i => { const r = J[i]; return `<div class="rival ${V.turno === i && !V.terminada ? "turno" : ""} ${r.fuera ? "fuera" : ""}">
-      <div class="quien">${avatar(i)}<span class="nom">${esc(r.nombre)}<br><small>${r.fuera ? "se retiró" : r.cartas + " cartas" + (V.sillas[i] && V.sillas[i].bot ? " · máquina" : "") + (V.sillas[i] && !V.sillas[i].conectado && !V.sillas[i].bot ? " · sin conexión" : "")}</small></span>
-        <span class="pts" title="puntos">${r.puntos}</span></div>
-      <div class="zona">${r.finca.map((m, o) => mataHTML(m, i, o, B)).join("") || `<span class="vacio">Finca vacía</span>`}</div>
-      <div class="zona" style="margin-top:6px">${r.bodega.length ? r.bodega.map((p, b) => prodHTML(p, i, b, B)).join("") : `<span class="vacio">Bodega vacía</span>`}</div>
+    <div class="escena n${orden.length}">
+    <div class="rivales">${orden.map((i, k) => { const r = J[i], [x, y] = POS[orden.length][k] || [50, 0], silla = V.sillas[i] || {};
+      const etq = r.fuera ? "se retiró" : V.turno === i && !V.terminada ? "juega ahora" : r.cartas + " cartas" + (silla.bot ? " · máquina" : "") + (!silla.conectado && !silla.bot ? " · sin conexión" : "");
+      return `<div class="rival ${V.turno === i && !V.terminada ? "turno" : ""} ${r.fuera ? "fuera" : ""}" style="--x:${x}%;--y:${y}px">
+      ${avatar(i)}<span class="nom">${esc(r.nombre)}<small>${etq}</small></span>
+      <span class="pts" title="puntos">${r.puntos}</span>
+      <div class="zona finca">${r.finca.map((m, o) => mataHTML(m, i, o, B)).join("") || `<span class="vacio">sin matas</span>`}</div>
+      <div class="zona bodega">${r.bodega.map((p, b) => prodHTML(p, i, b, B)).join("")}</div>
     </div>`; }).join("")}</div>
     <section class="centro">
       <div class="cab"><h3>Pedidos del pueblo</h3>
-        ${V.bonanza ? `<span class="chip" style="border-color:#B8891B">💰 Bonanza: +2 al próximo pedido</span>` : ""}
+        ${V.bonanza ? `<span class="chip" style="border-color:#B8891B">💰 +2 al próximo</span>` : ""}
         <span class="chip">Quedan ${V.pedidosQuedan}</span></div>
       <div class="pedidos">${V.fila.map((p, f) => p ? `<button class="pedido ${entregables.has(f) ? "puede" : ""}" data-pedido="${f}">
           <span class="pt">${p.pts}</span>${arte(p)}<span class="n">${esc(p.nombre)}</span>
           <span class="ing">${p.req.map(c => `<i style="--c:${R.CULTIVO[c].hex}" title="${esc(R.CULTIVO[c].label)}"></i>`).join("")}</span></button>`
         : `<div class="pedido hueco">Sin pedido</div>`).join("")}</div>
     </section>
+    </div>
+    <div class="abajo">
     <section class="mio ${mio ? "turno" : ""}">
       <div class="quien">${avatar(yo)}<span class="nom">${esc(mi.nombre)} (tú)<br><small>${mi.pedidos.length} pedidos entregados${mi.bonanzas ? " · " + mi.bonanzas + " bonanza" : ""}</small></span><span class="pts" title="puntos">${mi.puntos}</span></div>
       <div class="zonas">
@@ -204,7 +218,7 @@ function mesa() {
         <div><div class="zona"><span class="etq">Tu bodega</span>${mi.bodega.map((p, b) => prodHTML(p, yo, b, B)).join("") || `<span class="vacio">Cosecha matas maduras</span>`}</div></div>
       </div>
     </section>
-    <div class="mano">${(mi.mano || []).map((x, i) => {
+    <div class="juego"><div class="mano">${(mi.mano || []).map((x, i) => {
       const puede = mio && jugadasDe(i).length > 0;
       const cls = botando ? (elegidas.includes(i) ? "botar" : "") : (sel === i ? "sel" : (mio && !puede ? "apagada" : ""));
       return `<button class="carta ${cls}" data-carta="${i}" style="--c:${R.colorCarta(x)}"><span class="cost">${R.costo({ modo: V.modo }, x)}</span>
@@ -215,8 +229,9 @@ function mesa() {
         : `<span class="jornales">Jornales ${V.jornales > 0 ? Array.from({ length: V.jornales }, () => "<i></i>").join("") : "<i class='gastado'></i>"}</span>
            <button class="boton chico" id="bBotar" ${V.jugadas.some(j => j.tipo === "botar") ? "" : "disabled"}>Botar cartas</button>
            <button class="boton chico" id="bTerminar">Terminar turno</button><span class="reloj" id="reloj"></span>`)
-      : `<span class="espera">Juega ${esc(J[V.turno].nombre)}…</span><span class="reloj" id="reloj"></span>`}</div>
-    <div class="diario">${V.registro.map(t => `<p>${esc(t)}</p>`).join("")}</div>`;
+      : `<span class="espera">Juega ${esc(J[V.turno].nombre)}…</span><span class="reloj" id="reloj"></span>`}</div></div>
+    <div class="diario">${V.registro.map(t => `<p>${esc(t)}</p>`).join("")}</div>
+    </div>`;
   const d = $app.querySelector(".diario"); d.scrollTop = d.scrollHeight;
   enlazarMesa();
   if (sel !== null) hojaCarta(sel);
@@ -249,7 +264,7 @@ function tocarCarta(i) {
   const x = V.jugadores[V.yo].mano[i];
   if (V.turno !== V.yo || V.terminada) return info(x);
   if (botando) { elegidas = elegidas.includes(i) ? elegidas.filter(k => k !== i) : elegidas.concat(i).slice(-2); return mesa(); }
-  sel = sel === i ? null : i;
+  sel = sel === i ? null : i; verOpciones = false;
   if (sel === null) cerrarHoja();
   mesa();
 }
@@ -279,9 +294,22 @@ function tocarPedido(f) {
   const ops = V.jugadas.filter(x => x.tipo === "entregar" && x.f === f);
   hoja(p.nombre + " · " + p.pts + (p.pts === 1 ? " punto" : " puntos"), R.queHace(p) + " La huerta reemplaza un ingrediente.", ops);
 }
+let verOpciones = false;
 function hojaCarta(i) {
   const x = V.jugadores[V.yo].mano[i], ops = jugadasDe(i);
-  hoja(R.nombreCarta(x), R.queHace(x) + (ops.length ? (blancos().size ? " Toca una casilla que brille, o elige aquí:" : "") : " Ahora no tiene dónde jugarse."), ops, true);
+  /* Si la carta se juega sobre casillas de la mesa, la hoja se queda pequeña
+     para no tapar las casillas que brillan; la lista completa queda a un toque. */
+  if (blancos().size && !verOpciones) {
+    cerrarHoja();
+    const h = document.createElement("div"); h.className = "hoja mini"; h.id = "hoja";
+    h.innerHTML = `<div class="ops"><div class="fila"><b style="flex:1">${esc(R.nombreCarta(x))}</b>
+      <button class="boton chico" id="hOps">Ver ${ops.length} opciones</button><button class="boton chico" id="hNo">Soltar</button></div>
+      <p style="margin:6px 0 0">Toca una casilla que brille.</p></div>`;
+    h.querySelector("#hOps").onclick = () => { verOpciones = true; hojaCarta(i); };
+    h.querySelector("#hNo").onclick = () => { sel = null; cerrarHoja(); mesa(); };
+    $capa.appendChild(h); return;
+  }
+  hoja(R.nombreCarta(x), R.queHace(x) + (ops.length ? "" : " Ahora no tiene dónde jugarse."), ops, true);
 }
 function hoja(titulo, texto, ops, deCarta) {
   cerrarHoja();
