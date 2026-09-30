@@ -67,13 +67,12 @@ Con eso, a partir de ahí escribes solo el nombre de la carta y la línea del su
 
 ## Estado (30 de septiembre)
 
-**Listas y procesadas: 20 de 21.** Quedaron sin fondo, como PNG de verdad, en `arte/cartas/`,
+**Listas y procesadas: 21 de 21.** Quedaron sin fondo, como PNG de verdad, en `arte/cartas/`,
 y el ícono en `arte/cartas/iconos/`.
 
-- **Falta:** `e_desayuno_paisa.png`.
-- **Para repetir si quieres, pero no bloquean:**
-  - `e_panela.png` parece pan: la panela es un bloque macizo, marrón dorado y liso, no esponjoso;
-  - `e_guarapo.png` parece mazamorra: el guarapo es una bebida líquida, ámbar y con espuma.
+**Para repetir si quieres, pero no bloquean:**
+- `e_panela.png` parece pan: la panela es un bloque macizo, marrón dorado y liso, no esponjoso.
+- `e_guarapo.png` parece mazamorra: el guarapo es una bebida líquida, ámbar y con espuma.
 
 ## 5. Lo que hay que pintar: 21 ilustraciones nuevas
 
