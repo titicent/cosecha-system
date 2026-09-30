@@ -158,6 +158,12 @@ function blancos() {
   });
   return s;
 }
+/* Ingredientes de un pedido: ícono del cultivo con su cantidad (cacao ×2) */
+function ingredientes(req) {
+  const n = {}; req.forEach(c => { n[c] = (n[c] || 0) + 1; });
+  return Object.entries(n).map(([c, k]) => `<b class="ingr" style="--c:${R.CULTIVO[c].hex}" title="${k} de ${esc(R.CULTIVO[c].label)}">`
+    + `<img src="cartas/iconos/i_${c}.png" alt="${esc(R.CULTIVO[c].label)}">${k > 1 ? `<small>×${k}</small>` : ""}</b>`).join("");
+}
 function mataHTML(m, j, o, B) {
   const k = "m" + j + "." + o;
   return `<button class="mata ${m.madura ? "" : "brote"} ${B.has(k) ? "blanco" : ""}" data-mata="${j}.${o}" style="--c:${R.CULTIVO[m.carta.c].hex}" title="${esc(R.CULTIVO[m.carta.c].label)}">
@@ -206,7 +212,7 @@ function mesa() {
         <span class="chip">Quedan ${V.pedidosQuedan}</span></div>
       <div class="pedidos">${V.fila.map((p, f) => p ? `<button class="pedido ${entregables.has(f) ? "puede" : ""}" data-pedido="${f}">
           <span class="pt">${p.pts}</span>${arte(p)}<span class="n">${esc(p.nombre)}</span>
-          <span class="ing">${p.req.map(c => `<i style="--c:${R.CULTIVO[c].hex}" title="${esc(R.CULTIVO[c].label)}"></i>`).join("")}</span></button>`
+          <span class="ing">${ingredientes(p.req)}</span></button>`
         : `<div class="pedido hueco">Sin pedido</div>`).join("")}</div>
     </section>
     </div>
