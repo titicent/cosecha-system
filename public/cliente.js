@@ -6,7 +6,12 @@
    ═══════════════════════════════════════════════════════════════ */
 "use strict";
 (function () {
-const R = REGLAS;
+const R = REGLAS, M = MADURA;
+/* Dos juegos con las mismas cartas: «Madura y cosecha» (corto) y «Pedidos del pueblo». */
+const JUEGOS = { madura: { nombre: "Madura y cosecha", nota: "El corto: siembra, cosecha y llena tu canasta. 2 a 6 jugadores.", motor: M },
+  pedidos: { nombre: "Pedidos del pueblo", nota: "El largo: cosecha y entrega pedidos por puntos. 2 a 5 jugadores.", motor: R } };
+const esMadura = () => !!(V && V.juego === "madura");
+const K = () => (esMadura() ? M : R);
 const $app = document.getElementById("app"), $capa = document.getElementById("capa");
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const guardado = (k, d) => { try { const v = localStorage.getItem(k); return v === null ? d : JSON.parse(v); } catch (e) { return d; } };
@@ -20,7 +25,8 @@ const cult = c => `<img src="cartas/c_${c}.png" alt="" draggable="false">`;
 /* ── Estado ─────────────────────────────────────────────────── */
 let ws = null, V = null, sesion = guardado("cosecha2.sesion", null);
 let sel = null, botando = false, elegidas = [], ultimoEvento = null, limiteLocal = 0, pendiente = null;
-let pref = Object.assign({ nombre: "", jugadores: 3, nivel: "normal", modo: "completo" }, guardado("cosecha2.pref", {}));
+let pref = Object.assign({ nombre: "", jugadores: 3, nivel: "normal", modo: "completo", juego: "madura" }, guardado("cosecha2.pref", {}));
+if (!JUEGOS[pref.juego]) pref.juego = "madura";
 const codigoURL = (new URLSearchParams(location.search).get("sala") || "").toUpperCase();
 
 /* ── Conexión ───────────────────────────────────────────────── */
@@ -71,6 +77,8 @@ function pintar() {
 }
 
 function portada() {
+  const maxJ = JUEGOS[pref.juego].motor.MAX_JUG;
+  if (pref.jugadores > maxJ) pref.jugadores = maxJ;
   const n = pref.jugadores;
   $app.innerHTML = `
     <div class="logo"><div class="abanico">
@@ -80,16 +88,20 @@ function portada() {
       <p class="rot">¿Cómo te llaman en la vereda?</p>
       <input class="campo" id="nombre" maxlength="14" placeholder="Tu nombre" value="${esc(pref.nombre)}" autocomplete="nickname">
     </section>
+    <section class="marco" style="max-width:560px;margin:0 auto 14px">
+      <p class="rot">¿A qué jugamos?</p>
+      <div class="seg juegos" data-g="juego">${Object.entries(JUEGOS).map(([k, j]) => `<button aria-pressed="${k === pref.juego}" data-v="${k}"><b>${j.nombre}</b><small>${j.nota}</small></button>`).join("")}</div>
+    </section>
     <div class="dos-col">
       <section class="marco">
         <h2>Contra la máquina</h2>
         <p>Tú y vecinos de la máquina, para aprender o practicar.</p>
         <div class="rot">Jugadores</div>
-        <div class="seg" data-g="jugadores">${[2, 3, 4, 5].map(k => `<button aria-pressed="${k === n}" data-v="${k}">${k}</button>`).join("")}</div>
+        <div class="seg" data-g="jugadores">${Array.from({ length: maxJ - 1 }, (_, i) => i + 2).map(k => `<button aria-pressed="${k === n}" data-v="${k}">${k}</button>`).join("")}</div>
         <div class="rot">Vecinos</div>
         <div class="seg" data-g="nivel">${[["novato", "Novato"], ["normal", "Normal"], ["baquiano", "Baquiano"]].map(([k, t]) => `<button aria-pressed="${k === pref.nivel}" data-v="${k}">${t}</button>`).join("")}</div>
-        <div class="rot">Reglas</div>
-        <div class="seg" data-g="modo"><button aria-pressed="${pref.modo === "completo"}" data-v="completo">Juego completo</button><button aria-pressed="${pref.modo === "primera"}" data-v="primera">Primera cosecha</button></div>
+        ${pref.juego === "pedidos" ? `<div class="rot">Reglas</div>
+        <div class="seg" data-g="modo"><button aria-pressed="${pref.modo === "completo"}" data-v="completo">Juego completo</button><button aria-pressed="${pref.modo === "primera"}" data-v="primera">Primera cosecha</button></div>` : ""}
         <button class="jugar" id="solo">¡A sembrar!</button>
       </section>
       <section class="marco">
@@ -106,16 +118,16 @@ function portada() {
     const k = g.dataset.g; pref[k] = k === "jugadores" ? +b.dataset.v : b.dataset.v; guarda("cosecha2.pref", pref);
     pref.nombre = document.getElementById("nombre").value.trim(); portada(); }));
   document.getElementById("solo").onclick = () => { const x = nom(); if (!x) return;
-    mandar({ t: "crear", nombre: x, opciones: { modo: pref.modo }, bots: Array(pref.jugadores - 1).fill(pref.nivel), empezar: true }); };
-  document.getElementById("crear").onclick = () => { const x = nom(); if (!x) return; mandar({ t: "crear", nombre: x, opciones: { modo: pref.modo } }); };
+    mandar({ t: "crear", nombre: x, opciones: { juego: pref.juego, modo: pref.modo }, bots: Array(pref.jugadores - 1).fill(pref.nivel), empezar: true }); };
+  document.getElementById("crear").onclick = () => { const x = nom(); if (!x) return; mandar({ t: "crear", nombre: x, opciones: { juego: pref.juego, modo: pref.modo } }); };
   document.getElementById("unir").onclick = () => { const x = nom(); if (!x) return;
     const c = document.getElementById("codigo").value.trim().toUpperCase(); if (c.length !== 4) return error("El código tiene 4 letras");
     mandar({ t: "unir", codigo: c, nombre: x }); };
-  document.getElementById("reglas").onclick = verReglas;
+  document.getElementById("reglas").onclick = () => verReglas(pref.juego);
 }
 
 function sala() {
-  const soy = V.yo === V.anfitrion, n = V.sillas.length;
+  const soy = V.yo === V.anfitrion, n = V.sillas.length, juego = V.opciones.juego || "pedidos", MOT = JUEGOS[juego].motor;
   const enlace = location.origin + location.pathname + "?sala=" + V.codigo;
   $app.innerHTML = `<section class="marco" style="max-width:640px;margin:0 auto">
     <h2 style="text-align:center">Sala de espera</h2>
@@ -124,13 +136,17 @@ function sala() {
     <div class="fila" style="justify-content:center"><button class="boton chico" id="copiar">Copiar enlace</button></div>
     <div class="sillas">${V.sillas.map((s, i) => `<div class="silla">${avatar(i)}<div>${esc(s.nombre)}${i === V.yo ? " (tú)" : ""}
       <small>${s.bot ? "máquina · " + s.bot : i === V.anfitrion ? "arma la mesa" : s.conectado ? "listo" : "desconectado"}</small></div></div>`).join("")}
-      ${Array.from({ length: R.MAX_JUG - n }, () => `<div class="silla libre"><span class="av" style="background:transparent;border-style:dashed"></span><div>Silla libre</div></div>`).join("")}</div>
-    <div class="rot">Reglas</div>
+      ${Array.from({ length: Math.max(0, MOT.MAX_JUG - n) }, () => `<div class="silla libre"><span class="av" style="background:transparent;border-style:dashed"></span><div>Silla libre</div></div>`).join("")}</div>
+    <div class="rot">Juego</div>
+    <div class="seg" data-g="juego">${Object.entries(JUEGOS).map(([k, j]) =>
+      `<button aria-pressed="${juego === k}" data-v="${k}" ${soy ? "" : "disabled"}>${j.nombre}</button>`).join("")}</div>
+    ${juego === "pedidos" ? `<div class="rot">Reglas</div>
     <div class="seg" data-g="modo">${[["completo", "Juego completo"], ["primera", "Primera cosecha"]].map(([k, t]) =>
-      `<button aria-pressed="${V.opciones.modo === k}" data-v="${k}" ${soy ? "" : "disabled"}>${t}</button>`).join("")}</div>
-    ${soy ? `<div class="fila" style="margin-bottom:14px"><button class="boton chico" id="bot" ${n >= R.MAX_JUG ? "disabled" : ""}>+ Vecino de la máquina</button>
+      `<button aria-pressed="${V.opciones.modo === k}" data-v="${k}" ${soy ? "" : "disabled"}>${t}</button>`).join("")}</div>` : ""}
+    ${n > MOT.MAX_JUG ? `<p class="nota" style="text-align:center">${JUEGOS[juego].nombre} se juega hasta con ${MOT.MAX_JUG}: quita un vecino o cambia de juego.</p>` : ""}
+    ${soy ? `<div class="fila" style="margin-bottom:14px"><button class="boton chico" id="bot" ${n >= MOT.MAX_JUG ? "disabled" : ""}>+ Vecino de la máquina</button>
       <button class="boton chico" id="quitar" ${V.sillas.some(s => s.bot) ? "" : "disabled"}>− Quitar vecino</button></div>
-      <button class="jugar" id="empezar" ${n < R.MIN_JUG ? "disabled" : ""}>Empezar la partida</button>
+      <button class="jugar" id="empezar" ${n < MOT.MIN_JUG || n > MOT.MAX_JUG ? "disabled" : ""}>Empezar la partida</button>
       ${n < R.MIN_JUG ? `<p class="nota" style="text-align:center">Hacen falta al menos ${R.MIN_JUG} jugadores.</p>` : ""}`
       : `<p class="espera">Esperando a que ${esc(V.sillas[V.anfitrion] ? V.sillas[V.anfitrion].nombre : "el anfitrión")} empiece la partida…</p>`}
     <div class="fila" style="justify-content:center;margin-top:14px"><button class="boton chico" id="salir">Salir</button></div>
@@ -138,7 +154,8 @@ function sala() {
   document.getElementById("copiar").onclick = () => { navigator.clipboard && navigator.clipboard.writeText(enlace).then(() => error("Enlace copiado"), () => prompt("Copia el enlace:", enlace)); };
   document.getElementById("salir").onclick = salir;
   if (!soy) return;
-  $app.querySelectorAll('[data-g="modo"] button').forEach(b => b.onclick = () => mandar({ t: "opciones", opciones: { modo: b.dataset.v } }));
+  $app.querySelectorAll('[data-g="modo"] button').forEach(b => b.onclick = () => mandar({ t: "opciones", opciones: { juego, modo: b.dataset.v } }));
+  $app.querySelectorAll('[data-g="juego"] button').forEach(b => b.onclick = () => mandar({ t: "opciones", opciones: { juego: b.dataset.v, modo: V.opciones.modo } }));
   document.getElementById("bot").onclick = () => mandar({ t: "bot", nivel: pref.nivel });
   document.getElementById("quitar").onclick = () => mandar({ t: "quitarbot" });
   document.getElementById("empezar").onclick = () => mandar({ t: "empezar" });
@@ -183,6 +200,7 @@ const POS = {
   5: [[9, 230], [23, 40], [50, 0], [77, 40], [91, 230]]
 };
 function mesa() {
+  if (esMadura()) return mesaMadura();
   const yo = V.yo, J = V.jugadores, mi = J[yo], mio = V.turno === yo && !V.terminada, B = blancos();
   const orden = J.map((_, k) => (yo + 1 + k) % J.length).filter(i => i !== yo);
   const entregables = new Set(V.jugadas.filter(j => j.tipo === "entregar").map(j => j.f));
@@ -250,7 +268,7 @@ function enlazarMesa() {
   q("[data-prod]", b => () => { const [j, k] = b.dataset.prod.split(".").map(Number); tocarProd(j, k); });
   q("[data-pedido]", b => () => tocarPedido(+b.dataset.pedido));
   const on = (id, f) => { const e = document.getElementById(id); if (e) e.onclick = f; };
-  on("bReglas", verReglas);
+  on("bReglas", () => verReglas());
   on("bSalir", () => confirmar("¿Salir de la partida?", "Si sales, tus cartas vuelven al montón y la mesa sigue sin ti.", salir));
   on("verClima", () => info(V.clima));
   on("verFin", () => fin(true));
@@ -269,7 +287,7 @@ function jugar(j) {
 function tocarCarta(i) {
   const x = V.jugadores[V.yo].mano[i];
   if (V.turno !== V.yo || V.terminada) return info(x);
-  if (botando) { elegidas = elegidas.includes(i) ? elegidas.filter(k => k !== i) : elegidas.concat(i).slice(-2); return mesa(); }
+  if (botando) { elegidas = elegidas.includes(i) ? elegidas.filter(k => k !== i) : esMadura() ? elegidas.concat(i) : elegidas.concat(i).slice(-2); return mesa(); }
   sel = sel === i ? null : i; verOpciones = false;
   if (sel === null) cerrarHoja();
   mesa();
@@ -284,7 +302,8 @@ function tocarMata(j, o) {
   const m = V.jugadores[j].finca[o];
   const cos = V.jugadas.filter(x => x.tipo === "cosechar" && j === V.yo && x.o === o);
   hoja(R.CULTIVO[m.carta.c].label + (m.madura ? " madura" : " (brote)"),
-    (m.madura ? "Ya se puede cosechar." : "Es un brote: se endereza al empezar el turno de su dueño.") +
+    (esMadura() ? (m.madura ? "Madura: se cosecha al empezar el turno de su dueño, si nadie la daña antes." : "Brote: madura al empezar el turno de su dueño.")
+      : m.madura ? "Ya se puede cosechar." : "Es un brote: se endereza al empezar el turno de su dueño.") +
     (m.remedio ? " Tiene " + R.REMEDIO[m.remedio.c] + ": aguanta una plaga." : ""), cos);
 }
 function tocarProd(j, k) {
@@ -308,14 +327,14 @@ function hojaCarta(i) {
   if (blancos().size && !verOpciones) {
     cerrarHoja();
     const h = document.createElement("div"); h.className = "hoja mini"; h.id = "hoja";
-    h.innerHTML = `<div class="ops"><div class="fila"><b style="flex:1">${esc(R.nombreCarta(x))}</b>
+    h.innerHTML = `<div class="ops"><div class="fila"><b style="flex:1">${esc(K().nombreCarta(x))}</b>
       <button class="boton chico" id="hOps">Ver ${ops.length} opciones</button><button class="boton chico" id="hNo">Soltar</button></div>
       <p style="margin:6px 0 0">Toca una casilla que brille.</p></div>`;
     h.querySelector("#hOps").onclick = () => { verOpciones = true; hojaCarta(i); };
     h.querySelector("#hNo").onclick = () => { sel = null; cerrarHoja(); mesa(); };
     $capa.appendChild(h); return;
   }
-  hoja(R.nombreCarta(x), R.queHace(x) + (ops.length ? "" : " Ahora no tiene dónde jugarse."), ops, true);
+  hoja(K().nombreCarta(x), K().queHace(x) + (ops.length || (esMadura() && x.k === "remedio") ? "" : " Ahora no tiene dónde jugarse."), ops, true);
 }
 function hoja(titulo, texto, ops, deCarta) {
   cerrarHoja();
@@ -330,6 +349,122 @@ function hoja(titulo, texto, ops, deCarta) {
 }
 function cerrarHoja() { const h = document.getElementById("hoja"); if (h) h.remove(); }
 
+/* ── Madura y cosecha: la mesa ─────────────────────────────── */
+const icono = c => `<img src="cartas/iconos/i_${c}.png" alt="${esc(R.CULTIVO[c].label)}" draggable="false">`;
+/* La canasta: los cultivos cosechados y los huecos que faltan para la meta. */
+function canastaHTML(j) {
+  const huecos = Math.max(0, V.meta - j.canasta.length);
+  return j.canasta.map(c => `<span class="prod" style="--c:${R.CULTIVO[c].hex}" title="${esc(R.CULTIVO[c].label)} en la canasta">${icono(c)}</span>`).join("")
+    + Array.from({ length: huecos }, () => `<span class="prod hueco" title="falta"></span>`).join("");
+}
+/* Lo que le falta a tu canasta, para el centro de la mesa */
+function metaHTML(mi) {
+  const tiene = c => mi.canasta.includes(c), crece = c => mi.finca.some(m => m.carta.c === c);
+  const comodin = mi.canasta.includes("huerta");
+  return R.COLORES.concat("huerta").map(c => {
+    const est = tiene(c) ? "listo" : crece(c) ? "crece" : (c === "huerta" ? (comodin ? "listo" : "comodin") : "falta");
+    const txt = { listo: "en tu canasta", crece: "creciendo", falta: "te falta", comodin: "comodín" }[est];
+    return `<div class="meta-c ${est}" style="--c:${R.CULTIVO[c].hex}"><span class="disco">${icono(c)}</span><b>${esc(R.CULTIVO[c].label)}</b><small>${txt}</small></div>`;
+  }).join("");
+}
+function mesaMadura() {
+  const yo = V.yo, J = V.jugadores, mi = J[yo], mio = V.turno === yo && !V.terminada, B = blancos();
+  const orden = J.map((_, k) => (yo + 1 + k) % J.length).filter(i => i !== yo);
+  const puedeCambiar = V.jugadas.some(j => j.tipo === "botar");
+  $app.innerHTML = `
+    <div class="barra">
+      <span class="chip">Meta <b>${V.meta} cultivos</b></span>
+      <span class="chip">Mazo <b>${V.mazo}</b>${V.rebarajadas ? ` · barajado ${V.rebarajadas}×` : ""}</span>
+      <span class="espacio"></span>
+      <button class="icono" id="bReglas" title="Cómo se juega" aria-label="Cómo se juega">?</button>
+      <button class="icono" id="bSalir" title="Salir" aria-label="Salir de la partida">✕</button>
+    </div>
+    <div class="escena madura n${orden.length}">
+    <div class="rivales">${orden.map((i, k) => { const r = J[i], [x, y] = POS[orden.length][k] || [50, 0], silla = V.sillas[i] || {};
+      const etq = r.fuera ? "se retiró" : V.turno === i && !V.terminada ? "juega ahora" : r.cartas + " cartas" + (silla.bot ? " · máquina" : "") + (!silla.conectado && !silla.bot ? " · sin conexión" : "");
+      return `<div class="rival ${V.turno === i && !V.terminada ? "turno" : ""} ${r.fuera ? "fuera" : ""} ${r.faltan === 1 ? "casi" : ""}" style="--x:${x}%;--y:${y}px">
+      ${avatar(i)}<span class="nom">${esc(r.nombre)}<small>${etq}</small></span>
+      <span class="pts" title="cultivos en la canasta">${V.meta - r.faltan}/${V.meta}</span>
+      <div class="zona finca">${r.finca.map((m, o) => mataHTML(m, i, o, B)).join("") || `<span class="vacio">nada sembrado</span>`}</div>
+      <div class="zona bodega canasta">${canastaHTML(r)}</div>
+    </div>`; }).join("")}</div>
+    <section class="centro">
+      <div class="cab"><h3>Llena tu canasta</h3><span class="chip">${V.meta === 4 ? "los 4 cultivos" : "3 distintos"}</span></div>
+      <div class="meta-fila">${metaHTML(mi)}</div>
+      <p class="meta-nota">${V.meta === 4 ? "Café, plátano, cacao y caña." : "Tres cultivos distintos, los que quieras."} La huerta vale por el que falte, una vez.</p>
+    </section>
+    </div>
+    <div class="abajo">
+    <section class="mio ${mio ? "turno" : ""}">
+      <div class="quien">${avatar(yo)}<span class="nom">${esc(mi.nombre)} (tú)<br><small>${mi.faltan === 0 ? "¡canasta llena!" : "te " + (mi.faltan === 1 ? "falta 1 cultivo" : "faltan " + mi.faltan + " cultivos")}</small></span><span class="pts" title="cultivos en la canasta">${V.meta - mi.faltan}/${V.meta}</span></div>
+      <div class="zonas">
+        <div><div class="zona"><span class="etq">Tu finca</span>${mi.finca.map((m, o) => mataHTML(m, yo, o, B)).join("") || `<span class="vacio">Siembra un cultivo que te falte</span>`}</div></div>
+        <div><div class="zona canasta"><span class="etq">Tu canasta</span>${canastaHTML(mi)}</div></div>
+      </div>
+    </section>
+    <div class="juego"><div class="mano">${(mi.mano || []).map((x, i) => {
+      const puede = mio && jugadasDe(i).length > 0;
+      const cls = botando ? (elegidas.includes(i) ? "botar" : "") : (sel === i ? "sel" : (mio && !puede && x.k !== "remedio" ? "apagada" : ""));
+      return `<button class="carta ${cls}" data-carta="${i}" style="--c:${M.colorCarta(x)}">
+        ${x.k === "remedio" ? `<span class="guarda" title="Se usa solo cuando te echan una plaga">ataja</span>` : ""}
+        ${arte(x)}<span class="n">${esc(M.nombreCarta(x))}</span><span class="cl">${esc(M.claseCarta(x))}</span></button>`; }).join("")}</div>
+    <div class="acciones">${V.terminada ? `<span class="espera">La partida terminó.</span> <button class="boton chico" id="verFin">Ver resultado</button>`
+      : mio ? (botando
+        ? `<span class="espera">Toca las cartas que quieres cambiar</span><button class="boton chico" id="okBotar" ${elegidas.length ? "" : "disabled"}>Cambiar ${elegidas.length || ""}</button><button class="boton chico" id="noBotar">Cancelar</button>`
+        : `<span class="espera">Tu turno: siembra o echa una plaga</span>
+           <button class="boton chico" id="bBotar" ${puedeCambiar ? "" : "disabled"}>Cambiar cartas</button>
+           <button class="boton chico" id="bPasar">Pasar</button><span class="reloj" id="reloj"></span>`)
+      : `<span class="espera">Juega ${esc(J[V.turno].nombre)}…</span><span class="reloj" id="reloj"></span>`}</div></div>
+    <div class="diario">${V.registro.map(t => `<p>${esc(t)}</p>`).join("")}</div>
+    </div>`;
+  const d = $app.querySelector(".diario"); d.scrollTop = d.scrollHeight;
+  enlazarMesa();
+  const p = document.getElementById("bPasar");
+  if (p) p.onclick = () => { const hay = V.jugadas.some(j => j.tipo === "sembrar" || j.tipo === "plagar");
+    if (hay) confirmar("¿Pasar el turno?", "Todavía puedes sembrar o echar una plaga.", () => jugar({ tipo: "terminar" }));
+    else jugar({ tipo: "terminar" }); };
+  if (sel !== null) hojaCarta(sel);
+}
+function finMadura() {
+  const orden = V.jugadores.map((j, i) => ({ j, i })).sort((a, b) => a.j.faltan - b.j.faltan);
+  const gano = V.ganadores.includes(V.yo);
+  const v = ventana(`<h2>${V.ganadores.length > 1 ? "¡Empate en la cosecha!" : gano ? "¡Ganaste!" : esc(V.jugadores[V.ganadores[0]].nombre) + " ganó"}</h2>
+    <p style="text-align:center">${V.finPor === "meta" ? "Llenó la canasta primero." : V.finPor === "abandono" ? "La mesa se quedó sola." : "La partida se alargó demasiado: gana la canasta más llena."}</p>
+    <div class="podio">${orden.map(({ j, i }) => `<div class="${V.ganadores.includes(i) ? "gana" : ""}">${avatar(i)}<span>${esc(j.nombre)}${i === V.yo ? " (tú)" : ""}</span>
+      <span class="zona canasta">${canastaHTML(j)}</span></div>`).join("")}</div>
+    <div class="fila" style="justify-content:center">${V.yo === V.anfitrion ? `<button class="jugar" id="revancha" style="font-size:18px">Otra partida</button>` : `<p class="nota">Quien armó la mesa puede pedir otra partida.</p>`}
+      <button class="boton" id="aInicio">Volver al inicio</button><button class="boton" data-cerrar>Ver la mesa</button></div>`);
+  const r = v.querySelector("#revancha"); if (r) r.onclick = () => { v.remove(); mandar({ t: "revancha" }); };
+  v.querySelector("#aInicio").onclick = () => { v.remove(); salir(); };
+}
+function reglasMadura() {
+  ventana(`<div class="reglas-txt"><h2>Madura y cosecha</h2>
+    <p>Siembra, deja madurar y cosecha. <b>Gana quien llene primero su canasta</b>: café, plátano, cacao y caña
+      (con 5 o 6 jugadores bastan 3 distintos). La huerta vale por el que falte.</p>
+    <h3>Tu turno</h3>
+    <ol><li><b>Amanece:</b> lo maduro pasa a tu canasta y los brotes maduran.</li>
+      <li><b>Si quieres, cambia cartas</b> una vez: botas las que no te sirven y robas otras.</li>
+      <li><b>Haz una cosa:</b> sembrar un cultivo que te falte o echarle una plaga a la mata de un vecino.</li>
+      <li><b>Roba</b> hasta tener 4 cartas.</li></ol>
+    <p>Lo que siembras hoy madura en tu próximo turno y se cosecha en el siguiente: los vecinos tienen dos vueltas para dañarlo.</p>
+    <h3>El color manda</h3>
+    <p>La Broca es del café: daña café o huerta. La Langosta daña cualquier mata.</p>
+    <h3>Los remedios se guardan</h3>
+    <p>No se juegan: se quedan en tu mano. Si te echan una plaga y tienes el remedio de ese color (o el Jabón potásico), la ataja solo.</p>
+    <h3>En la mesa</h3>
+    <p>Toca una carta de tu mano: se iluminan las matas donde se puede jugar.</p>
+    <div class="fila" style="justify-content:center"><button class="boton" data-cerrar>Entendido</button></div></div>`);
+}
+function sucesoMadura(e, v) {
+  const quien = e.ji !== undefined && v.jugadores[e.ji] ? v.jugadores[e.ji].nombre : "";
+  const nom = c => R.CULTIVO[c].label.toLowerCase();
+  if (e.tipo === "plagar" && e.j === v.yo) cola.push({ img: M.claveArte(e.carta), c: M.colorCarta(e.carta), cinta: "¡Plaga!", linea: quien + " te dañó " + (e.c === "cana" || e.c === "huerta" ? "la " : "el ") + nom(e.c) + "." });
+  if (e.tipo === "atajo" && e.j === v.yo) cola.push({ img: M.claveArte(e.remedio), c: M.colorCarta(e.remedio), cinta: "¡Atajada!", linea: "Tu " + R.REMEDIO[e.remedio.c] + " frenó la plaga de " + quien + "." });
+  if (e.tipo === "atajo" && e.ji === v.yo) cola.push({ img: M.claveArte(e.remedio), c: M.colorCarta(e.remedio), cinta: "¡Te la atajaron!", linea: v.jugadores[e.j].nombre + " tenía " + R.REMEDIO[e.remedio.c] + "." });
+  if (e.tipo === "cosecha" && e.ji === v.yo) cola.push({ img: "c_" + e.c, c: R.CULTIVO[e.c].hex, cinta: "¡A la canasta!", linea: "Cosechaste " + nom(e.c) + "." });
+  if (e.tipo === "fin") cola.push({ fin: true });
+}
+
 /* ── Ventanas ───────────────────────────────────────────────── */
 function ventana(html, alCerrar) {
   const v = document.createElement("div"); v.className = "velo-modal";
@@ -338,8 +473,9 @@ function ventana(html, alCerrar) {
   $capa.appendChild(v); return v;
 }
 function info(x) {
-  ventana(`<div class="info" style="--c:${R.colorCarta(x)}"><div class="med">${arte(x)}</div><h2>${esc(R.nombreCarta(x))}</h2>
-    <div class="cl">${esc(R.claseCarta(x))}</div><p>${esc(R.queHace(x))}</p>
+  const Q = K();
+  ventana(`<div class="info" style="--c:${Q.colorCarta(x)}"><div class="med">${arte(x)}</div><h2>${esc(Q.nombreCarta(x))}</h2>
+    <div class="cl">${esc(Q.claseCarta(x))}</div><p>${esc(Q.queHace(x))}</p>
     <div class="fila" style="justify-content:center"><button class="boton" data-cerrar>Cerrar</button></div></div>`);
 }
 function confirmar(t, texto, si) {
@@ -350,6 +486,7 @@ function confirmar(t, texto, si) {
 function fin(forzar) {
   if (!V.terminada) return;
   if (document.querySelector(".velo-modal") && !forzar) return;
+  if (esMadura()) return finMadura();
   const orden = V.jugadores.map((j, i) => ({ j, i })).sort((a, b) => b.j.puntos - a.j.puntos || b.j.bodega.length - a.j.bodega.length);
   const gano = V.ganadores.includes(V.yo);
   const v = ventana(`<h2>${V.ganadores.length > 1 ? "¡Comparten la cosecha!" : gano ? "¡Ganaste!" : esc(V.jugadores[V.ganadores[0]].nombre) + " ganó"}</h2>
@@ -361,7 +498,8 @@ function fin(forzar) {
   const r = v.querySelector("#revancha"); if (r) r.onclick = () => { v.remove(); mandar({ t: "revancha" }); };
   v.querySelector("#aInicio").onclick = () => { v.remove(); salir(); };
 }
-function verReglas() {
+function verReglas(juego) {
+  if (juego === "madura" || (!juego && esMadura())) return reglasMadura();
   ventana(`<div class="reglas-txt"><h2>Cómo se juega</h2>
     <p>Siembra, deja madurar, cosecha y <b>entrega los pedidos del pueblo</b>. Gana quien más puntos junte.</p>
     <h3>Tu turno</h3>
@@ -388,6 +526,7 @@ function sucesos(v, primera) {
   const nuevos = v.eventos.filter(e => ultimoEvento !== null && e.n > ultimoEvento);
   if (v.eventos.length) ultimoEvento = Math.max(ultimoEvento || 0, ...v.eventos.map(e => e.n));
   if (primera) { if (v.terminada) setTimeout(() => fin(), 400); return; }
+  if (esMadura()) { nuevos.forEach(e => sucesoMadura(e, v)); return siguiente(); }
   nuevos.forEach(e => {
     const quien = e.ji !== undefined && v.jugadores[e.ji] ? v.jugadores[e.ji].nombre : "";
     if (e.tipo === "clima") { const c = R.CLIMAS[e.clima]; cola.push({ img: c.clave, c: c.hex, cinta: c.nombre, linea: c.texto }); }

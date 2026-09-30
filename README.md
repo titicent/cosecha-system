@@ -1,9 +1,14 @@
-# Cosecha · versión de pedidos
+# Cosecha · el juego de la finca
 
-*El juego de la finca · 2 a 5 jugadores · desde 8 años · 20 a 35 minutos*
+Dos juegos con las mismas cartas, los dos en línea:
 
-Siembra, deja madurar, cosecha y **entrega los pedidos del pueblo**: tinto campesino,
-patacones, chocolate santafereño. Gana quien más puntos junte. El juego original sigue
+- **Madura y cosecha** · 2 a 6 jugadores · 10 a 25 minutos. El corto: en tu turno siembras o echas
+  una plaga; lo que sobrevive dos vueltas va a tu canasta. Gana quien la llene primero.
+  Reglas en [`MADURA-Y-COSECHA.md`](MADURA-Y-COSECHA.md).
+- **Pedidos del pueblo** · 2 a 5 jugadores · 20 a 35 minutos. El largo: siembra, cosecha y
+  **entrega los pedidos del pueblo** (tinto campesino, patacones, chocolate santafereño) por puntos.
+  Reglas en [`REGLAMENTO.md`](REGLAMENTO.md).
+ El juego original sigue
 intacto en [titicent/Cosecha_Game](https://github.com/titicent/Cosecha_Game).
 
 ## Jugar en línea
@@ -32,15 +37,17 @@ npm start          → http://localhost:3000
 
 | Archivo | Qué es |
 |---|---|
-| [`REGLAMENTO.md`](REGLAMENTO.md) | Reglamento completo: juego completo y Primera cosecha |
-| `public/reglas.js` | Motor de reglas. Lo usan el servidor, el navegador y el imprimible |
+| [`MADURA-Y-COSECHA.md`](MADURA-Y-COSECHA.md) | Reglamento de Madura y cosecha, con sus números de equilibrio |
+| [`REGLAMENTO.md`](REGLAMENTO.md) | Reglamento de Pedidos del pueblo: juego completo y Primera cosecha |
+| `public/madura.js` | Motor de Madura y cosecha (usa los nombres y el arte de `reglas.js`) |
+| `public/reglas.js` | Motor de Pedidos del pueblo. Lo usan el servidor, el navegador y el imprimible |
 | `server.js` | Servidor: salas, código, reconexión, vistas privadas, bots y reloj |
 | `public/cliente.js`, `estilo.css` | La mesa en el navegador |
 | `gen-imprimible.js` | `npm run imprimible` genera `cosecha-imprimible.html`; se imprime o se guarda como PDF |
-| `pruebas.js` | `npm test`: 12.000 partidas simuladas y reglas puntuales |
+| `pruebas.js` | `npm test`: miles de partidas simuladas de los dos juegos y reglas puntuales |
 | [`GUIA-ILUSTRACIONES.md`](GUIA-ILUSTRACIONES.md) | Cómo generar las ilustraciones y con qué nombre |
 | `arte/cartas/` | Las ilustraciones nuevas, sin fondo |
-| `prototipo/` | El simulador con que se diseñaron y equilibraron las reglas |
+| `prototipo/` | Los simuladores con que se diseñaron y equilibraron las reglas (`simular-madura.js` mide el juego corto) |
 
 ## Próximos pasos
 

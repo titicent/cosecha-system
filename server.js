@@ -15,6 +15,10 @@ const path = require("path");
 const crypto = require("crypto");
 const { WebSocketServer } = require("ws");
 const R = require("./public/reglas.js");
+const M = require("./public/madura.js");
+/* Cada sala juega con uno de los dos motores: «Madura y cosecha» o «Pedidos del pueblo». */
+const motor = sala => (sala.opciones.juego === "madura" ? M : R);
+const limpiaOpciones = o => ({ juego: o && o.juego === "pedidos" ? "pedidos" : "madura", modo: o && o.modo === "primera" ? "primera" : "completo" });
 
 const PUERTO = process.env.PORT || 3000;
 const PUBLICO = path.join(__dirname, "public");
@@ -60,14 +64,15 @@ function nombreLibre(sala, base) {
   for (let i = 2; ; i++) if (!usados.has(base + " " + i)) return base + " " + i;
 }
 function crearSala(opciones) {
-  const sala = { codigo: nuevoCodigo(), sillas: [], opciones: { modo: opciones && opciones.modo === "primera" ? "primera" : "completo" },
+  const sala = { codigo: nuevoCodigo(), sillas: [], opciones: limpiaOpciones(opciones),
     E: null, reloj: null, limite: 0, botTimer: null, actividad: Date.now(), vueltasSinJugar: {} };
   salas.set(sala.codigo, sala);
   return sala;
 }
 function sentar(sala, nombre, bot) {
   if (sala.E) throw new Error("La partida ya empezó");
-  if (sala.sillas.length >= R.MAX_JUG) throw new Error("La mesa está llena (máximo " + R.MAX_JUG + ")");
+  const MAX = motor(sala).MAX_JUG;
+  if (sala.sillas.length >= MAX) throw new Error("La mesa está llena (máximo " + MAX + ")");
   const silla = { nombre: nombreLibre(sala, bot ? R.NOMBRES_BOT.find(n => !sala.sillas.some(s => s.nombre === n)) || "Vecino" : limpiaNombre(nombre)),
     token: crypto.randomBytes(12).toString("hex"), ws: null, bot: bot || null, conectado: !!bot, ausencias: 0 };
   sala.sillas.push(silla);
@@ -77,7 +82,7 @@ function sentar(sala, nombre, bot) {
 /* ── Envío de vistas ────────────────────────────────────────── */
 const manda = (ws, m) => { if (ws && ws.readyState === 1) ws.send(JSON.stringify(m)); };
 function vistaSala(sala, i) {
-  const base = sala.E ? R.vista(sala.E, i) : {};
+  const base = sala.E ? motor(sala).vista(sala.E, i) : {};
   return Object.assign(base, {
     codigo: sala.codigo, iniciada: !!sala.E, yo: i, anfitrion: sala.sillas.findIndex(s => !s.bot),
     opciones: sala.opciones, restante: sala.E && !sala.E.terminada ? Math.max(0, Math.round((sala.limite - Date.now()) / 1000)) : null,
@@ -105,8 +110,9 @@ function programar(sala) {
 function jugarBot(sala) {
   const E = sala.E; if (!E || E.terminada) return;
   const s = sala.sillas[E.turno];
-  const j = R.validar(E, E.turno, R.elegir(E, E.turno, s.bot || "normal"));
-  R.aplicar(E, E.turno, j || { tipo: "terminar", costo: 0 });
+  const K = motor(sala);
+  const j = K.validar(E, E.turno, K.elegir(E, E.turno, s.bot || "normal"));
+  K.aplicar(E, E.turno, j || { tipo: "terminar", costo: 0 });
   difundir(sala); programar(sala);
 }
 /* Si alguien no juega a tiempo, su turno se cierra. A la tercera vez seguida,
@@ -115,15 +121,17 @@ function tiempoAgotado(sala, turnoDe, marca) {
   const E = sala.E; if (!E || E.terminada || E.turno !== turnoDe || E.turnosJugados !== marca) return;
   const s = sala.sillas[turnoDe];
   s.ausencias++;
-  R.aplicar(E, turnoDe, { tipo: "terminar", costo: 0 });
+  motor(sala).aplicar(E, turnoDe, { tipo: "terminar", costo: 0 });
   E.registro.push("⏱ Se le acabó el tiempo a " + s.nombre + ".");
   if (s.ausencias >= 3) { s.bot = "normal"; E.registro.push(s.nombre + " no volvió: juega por él un vecino de la máquina."); }
   difundir(sala); programar(sala);
 }
 
 function empezar(sala) {
-  if (sala.sillas.length < R.MIN_JUG) throw new Error("Hacen falta al menos " + R.MIN_JUG + " jugadores");
-  sala.E = R.nuevaPartida(sala.sillas.map(s => s.nombre), { modo: sala.opciones.modo, semilla: crypto.randomInt(2 ** 31) });
+  const K = motor(sala);
+  if (sala.sillas.length < K.MIN_JUG) throw new Error("Hacen falta al menos " + K.MIN_JUG + " jugadores");
+  if (sala.sillas.length > K.MAX_JUG) throw new Error("Este juego es hasta de " + K.MAX_JUG + " jugadores");
+  sala.E = K.nuevaPartida(sala.sillas.map(s => s.nombre), { modo: sala.opciones.modo, semilla: crypto.randomInt(2 ** 31) });
   sala.sillas.forEach(s => { s.ausencias = 0; });
   difundir(sala); programar(sala);
 }
@@ -162,7 +170,7 @@ function atender(ws, m) {
     const sala = crearSala(m.opciones);
     sentar(sala, m.nombre);
     unirWs(ws, sala, 0);
-    (Array.isArray(m.bots) ? m.bots : []).slice(0, R.MAX_JUG - 1).forEach(n => sentar(sala, null, NIVELES.includes(n) ? n : "normal"));
+    (Array.isArray(m.bots) ? m.bots : []).slice(0, motor(sala).MAX_JUG - 1).forEach(n => sentar(sala, null, NIVELES.includes(n) ? n : "normal"));
     if (m.empezar) return empezar(sala);
     return difundir(sala);
   }
@@ -197,7 +205,7 @@ function atender(ws, m) {
       return difundir(sala); }
     case "opciones":
       if (!esAnfitrion || sala.E) return;
-      sala.opciones.modo = m.opciones && m.opciones.modo === "primera" ? "primera" : "completo";
+      sala.opciones = limpiaOpciones(m.opciones);
       return difundir(sala);
     case "empezar":
       if (!esAnfitrion) throw new Error("Solo quien armó la mesa puede empezar");
@@ -206,10 +214,10 @@ function atender(ws, m) {
     case "jugar": {
       const E = sala.E; if (!E) throw new Error("La partida no ha empezado");
       if (E.turno !== yo) throw new Error("Todavía no es tu turno");
-      const j = R.validar(E, yo, m.jugada);
+      const j = motor(sala).validar(E, yo, m.jugada);
       if (!j) throw new Error("Esa jugada no se puede hacer ahora");
       sala.sillas[yo].ausencias = 0;
-      R.aplicar(E, yo, j);
+      motor(sala).aplicar(E, yo, j);
       difundir(sala); programar(sala); return; }
     case "revancha":
       if (!esAnfitrion) throw new Error("Solo quien armó la mesa puede pedir la revancha");
@@ -217,11 +225,11 @@ function atender(ws, m) {
       /* los puestos vacíos (se fueron) salen de la mesa */
       sala.sillas = sala.sillas.filter(s => s.bot || s.conectado);
       sala.sillas.forEach((x, k) => { if (x.ws) { x.ws.silla = k; manda(x.ws, { t: "sesion", codigo: sala.codigo, token: x.token, yo: k }); } });
-      if (sala.sillas.length < R.MIN_JUG) { sala.E = null; return difundir(sala); }
+      if (sala.sillas.length < motor(sala).MIN_JUG) { sala.E = null; return difundir(sala); }
       return empezar(sala);
     case "salir": {
       const E = sala.E;
-      if (E && !E.terminada) { R.retirar(E, yo); sala.sillas[yo].bot = null; }
+      if (E && !E.terminada) { motor(sala).retirar(E, yo); sala.sillas[yo].bot = null; }
       const s = sala.sillas[yo]; s.ws = null; s.conectado = false;
       ws.sala = null; ws.silla = -1;
       if (!sala.E) { sala.sillas.splice(yo, 1); sala.sillas.forEach((x, k) => { if (x.ws) x.ws.silla = k; }); }
@@ -239,7 +247,7 @@ setInterval(() => {
   }
 }, 30000);
 
-for (const f of ["index.html", "reglas.js", "cliente.js", "estilo.css"]) {
+for (const f of ["index.html", "reglas.js", "madura.js", "cliente.js", "estilo.css"]) {
   if (!fs.existsSync(path.join(PUBLICO, f))) { console.error("  ✗ Falta public/" + f); process.exit(1); }
 }
 servidor.listen(PUERTO, () => console.log("Cosecha lista en http://localhost:" + PUERTO));
