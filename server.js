@@ -250,5 +250,5 @@ setInterval(() => {
 for (const f of ["index.html", "reglas.js", "madura.js", "cliente.js", "estilo.css"]) {
   if (!fs.existsSync(path.join(PUBLICO, f))) { console.error("  ✗ Falta public/" + f); process.exit(1); }
 }
-servidor.listen(PUERTO, () => console.log("Cosecha lista en http://localhost:" + PUERTO));
+servidor.listen(PUERTO, () => console.log("Cosecha lista en http://localhost:" + PUERTO + "  (Node " + process.version + ")"));
 module.exports = { servidor, salas };
